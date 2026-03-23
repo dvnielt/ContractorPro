@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
+import { TECH_COLOR_PALETTE } from '@/data/mockData';
+import { useToast } from '@/context/ToastContext';
 
 export default function AdminTechsPage() {
-  const { getTechs, getInventoryItems, getTechInventory, assignInventoryToTech } = useData();
+  const { getTechs, getInventoryItems, getTechInventory, assignInventoryToTech, updateUser } = useData();
 
   const techs = getTechs();
   const inventoryItems = getInventoryItems();
@@ -20,6 +22,7 @@ export default function AdminTechsPage() {
   const [assignQuantity, setAssignQuantity] = useState('');
   const [assignError, setAssignError] = useState('');
 
+  const { toast } = useToast();
   const selectedTech = selectedTechId ? techs.find(t => t.id === selectedTechId) : null;
   const techInventory = selectedTechId ? getTechInventory(selectedTechId) : [];
 
@@ -47,6 +50,7 @@ export default function AdminTechsPage() {
       setAssignItemId('');
       setAssignQuantity('');
       setAssignError('');
+      toast('Inventory assigned');
     } catch (err) {
       setAssignError('Failed to assign inventory');
     }
@@ -83,8 +87,18 @@ export default function AdminTechsPage() {
                         : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
                     }`}
                   >
-                    <div className="font-medium text-gray-900">{tech.fullName}</div>
-                    <div className="text-sm text-gray-500">{tech.email}</div>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                        style={{ backgroundColor: tech.color }}
+                      >
+                        {tech.fullName.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{tech.fullName}</div>
+                        <div className="text-sm text-gray-500">{tech.email}</div>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -93,8 +107,42 @@ export default function AdminTechsPage() {
         </div>
 
         {/* Tech Inventory */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-4">
           {selectedTech ? (
+            <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-4">
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold"
+                    style={{ backgroundColor: selectedTech.color }}
+                  >
+                    {selectedTech.fullName.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-lg text-gray-900">{selectedTech.fullName}</div>
+                    <div className="text-sm text-gray-500">{selectedTech.email}</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">Color</div>
+                  <div className="flex flex-wrap gap-2">
+                    {TECH_COLOR_PALETTE.map((c) => (
+                      <button
+                        key={c.value}
+                        onClick={() => { updateUser(selectedTech.id, { color: c.value }); toast('Color updated'); }}
+                        className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${selectedTech.color === c.value ? 'ring-2 ring-offset-2 ring-gray-700 scale-110' : ''}`}
+                        style={{ backgroundColor: c.value }}
+                        title={c.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -129,6 +177,7 @@ export default function AdminTechsPage() {
                 )}
               </CardContent>
             </Card>
+            </>
           ) : (
             <Card>
               <CardContent className="py-12 text-center text-gray-500">

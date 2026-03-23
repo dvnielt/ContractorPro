@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useData } from '@/context/DataContext';
 import { Card } from '@/components/ui/Card';
-import { StatusBadge } from '@/components/ui/Badge';
+import { StatusBadge, JobTypeBadge, BidStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { JobStatus } from '@/data/types';
@@ -13,11 +13,13 @@ export default function AdminJobsPage() {
   const { getJobs, getTechs, getUserById } = useData();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [techFilter, setTechFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const jobs = getJobs();
   const techs = getTechs();
 
-  // Apply filters
   let filteredJobs = jobs;
   if (statusFilter !== 'all') {
     filteredJobs = filteredJobs.filter(j => j.status === statusFilter);
@@ -25,8 +27,18 @@ export default function AdminJobsPage() {
   if (techFilter !== 'all') {
     filteredJobs = filteredJobs.filter(j => j.assignedTechId === techFilter);
   }
+  if (typeFilter !== 'all') {
+    filteredJobs = filteredJobs.filter(j => j.jobType === typeFilter);
+  }
+  if (dateFrom) {
+    const from = new Date(dateFrom).setHours(0, 0, 0, 0);
+    filteredJobs = filteredJobs.filter(j => new Date(j.createdAt).getTime() >= from);
+  }
+  if (dateTo) {
+    const to = new Date(dateTo).setHours(23, 59, 59, 999);
+    filteredJobs = filteredJobs.filter(j => new Date(j.createdAt).getTime() <= to);
+  }
 
-  // Sort by most recent first
   filteredJobs = [...filteredJobs].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -36,7 +48,16 @@ export default function AdminJobsPage() {
     { value: 'assigned', label: 'Assigned' },
     { value: 'on_the_way', label: 'On the Way' },
     { value: 'in_progress', label: 'In Progress' },
+    { value: 'pending_review', label: 'Pending Review' },
     { value: 'complete', label: 'Complete' },
+  ];
+
+  const typeOptions = [
+    { value: 'all', label: 'All Types' },
+    { value: 'tree', label: 'Tree' },
+    { value: 'irrigation', label: 'Irrigation' },
+    { value: 'sod', label: 'Sod' },
+    { value: 'other', label: 'Other' },
   ];
 
   const techOptions = [
@@ -49,26 +70,59 @@ export default function AdminJobsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
         <Link href="/admin/jobs/new">
-          <Button>Create Job</Button>
+          <Button>+ New Job</Button>
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="w-full sm:w-48">
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="w-full sm:w-44">
           <Select
             options={statusOptions}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           />
         </div>
-        <div className="w-full sm:w-48">
+        <div className="w-full sm:w-44">
+          <Select
+            options={typeOptions}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          />
+        </div>
+        <div className="w-full sm:w-44">
           <Select
             options={techOptions}
             value={techFilter}
             onChange={(e) => setTechFilter(e.target.value)}
           />
         </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="From date"
+          />
+          <span className="text-gray-400 text-sm">to</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="To date"
+          />
+          {(dateFrom || dateTo) && (
+            <Button size="sm" variant="ghost" onClick={() => { setDateFrom(''); setDateTo(''); }}>
+              Clear
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="text-sm text-gray-500">
+        {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''}
       </div>
 
       {/* Jobs List */}
@@ -82,14 +136,22 @@ export default function AdminJobsPage() {
         <div className="space-y-3">
           {filteredJobs.map((job) => {
             const tech = job.assignedTechId ? getUserById(job.assignedTechId) : null;
+            const isReviewable = job.status === 'pending_review';
             return (
               <Link key={job.id} href={`/admin/jobs/${job.id}`}>
-                <Card hoverable className="mb-0">
+                <Card hoverable className={`mb-0 ${isReviewable ? 'border-l-4 border-l-teal-500' : ''}`}>
                   <div className="flex flex-col sm:flex-row justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <div
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: job.color }}
+                        />
                         <span className="font-medium text-gray-900">{job.clientName}</span>
+                        <span className="text-xs text-gray-400 font-mono">{job.jobNumber}</span>
                         <StatusBadge status={job.status} />
+                        <JobTypeBadge jobType={job.jobType} />
+                        {job.bidStatus && <BidStatusBadge bidStatus={job.bidStatus} />}
                       </div>
                       <div className="text-sm text-gray-600 truncate">{job.address}</div>
                       {job.description && (
@@ -98,11 +160,19 @@ export default function AdminJobsPage() {
                     </div>
                     <div className="text-sm text-gray-500 sm:text-right shrink-0">
                       {tech ? (
-                        <div className="font-medium text-gray-700">{tech.fullName}</div>
+                        <div className="flex items-center gap-2 sm:justify-end">
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                            style={{ backgroundColor: tech.color }}
+                          >
+                            {tech.fullName[0]}
+                          </div>
+                          <span className="font-medium text-gray-700">{tech.fullName}</span>
+                        </div>
                       ) : (
                         <div className="text-gray-400">Unassigned</div>
                       )}
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-gray-400 mt-1">
                         {new Date(job.createdAt).toLocaleDateString()}
                       </div>
                     </div>
