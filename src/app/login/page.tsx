@@ -3,99 +3,91 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useData } from '@/context/DataContext';
-import { User } from '@/data/types';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
-  const { getAdmins, getTechs, resetData } = useData();
-  const [selectedRole, setSelectedRole] = useState<'admin' | 'tech'>('admin');
+  const { signIn } = useAuth();
 
-  const admins = getAdmins();
-  const techs = getTechs();
-  const users = selectedRole === 'admin' ? admins : techs;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (user: User) => {
-    login(user);
-    router.push(user.role === 'admin' ? '/admin' : '/tech');
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) return;
 
-  const handleReset = () => {
-    resetData();
-    window.location.reload();
+    setIsLoading(true);
+    setError('');
+
+    const { error: signInError } = await signIn(email.trim(), password);
+    if (signInError) {
+      setError(signInError);
+      setIsLoading(false);
+      return;
+    }
+
+    // Redirect is handled by middleware / layout guard
+    router.push('/admin');
+    router.refresh();
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">FieldFlow</h1>
-          <p className="text-gray-600 mt-2">Landscaping Field Service Demo</p>
+          <p className="text-gray-600 mt-2">Sign in to continue</p>
         </div>
 
-        {/* Role Selection */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Role
-          </label>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedRole('admin')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-                selectedRole === 'admin'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Admin
-            </button>
-            <button
-              onClick={() => setSelectedRole('tech')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-                selectedRole === 'tech'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Tech
-            </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="you@company.com"
+              required
+            />
           </div>
-        </div>
 
-        {/* User Selection */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select User
-          </label>
-          <div className="space-y-2">
-            {users.map((user) => (
-              <button
-                key={user.id}
-                onClick={() => handleLogin(user)}
-                className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
-              >
-                <div className="font-medium text-gray-900">{user.fullName}</div>
-                <div className="text-sm text-gray-500">{user.email}</div>
-              </button>
-            ))}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="••••••••"
+              required
+            />
           </div>
-        </div>
 
-        {/* Reset Demo Data */}
-        <div className="pt-4 border-t border-gray-200">
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
           <button
-            onClick={handleReset}
-            className="w-full py-2 px-4 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2.5 rounded-lg transition-colors"
           >
-            Reset Demo Data
+            {isLoading ? 'Signing in…' : 'Sign in'}
           </button>
-        </div>
+        </form>
       </div>
-
-      <p className="mt-4 text-sm text-gray-500">
-        This is a demo. Select a role and user to continue.
-      </p>
     </div>
   );
 }
