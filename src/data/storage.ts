@@ -1,7 +1,7 @@
-import { AppData, User, InventoryItem, TechInventory, Job, JobPhoto, JobInventory, JobStatus, PhotoType } from './types';
+import { AppData, User, InventoryItem, TechInventory, Job, JobPhoto, JobInventory, JobStatus, PhotoType, JobType, BidStatus, JobChecklist } from './types';
 import { initialData } from './mockData';
 
-const STORAGE_KEY = 'fieldflow_data';
+const STORAGE_KEY = 'fieldflow_data_v2';
 
 // Load data from localStorage or use initial data
 export function loadData(): AppData {
@@ -12,9 +12,13 @@ export function loadData(): AppData {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Validate it has the new schema fields
+      if (parsed.jobChecklists !== undefined && parsed.jobNumberCounter !== undefined) {
+        return parsed;
+      }
     } catch {
-      return initialData;
+      // fall through to reset
     }
   }
 
@@ -42,6 +46,11 @@ export function resetData(): AppData {
 const uuid = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
 
+// Generate job number from counter
+function generateJobNumber(counter: number): string {
+  return `JOB-${String(counter).padStart(4, '0')}`;
+}
+
 // ============ USER OPERATIONS ============
 
 export function getUsers(data: AppData): User[] {
@@ -60,6 +69,13 @@ export function getAdmins(data: AppData): User[] {
   return data.users.filter(u => u.role === 'admin');
 }
 
+export function updateUser(data: AppData, id: string, updates: Partial<User>): AppData {
+  return {
+    ...data,
+    users: data.users.map(u => u.id === id ? { ...u, ...updates } : u),
+  };
+}
+
 // ============ INVENTORY OPERATIONS ============
 
 export function getInventoryItems(data: AppData): InventoryItem[] {
@@ -70,12 +86,19 @@ export function getInventoryItemById(data: AppData, id: string): InventoryItem |
   return data.inventoryItems.find(i => i.id === id);
 }
 
-export function addInventoryItem(data: AppData, name: string, unit: string, quantity: number = 0): AppData {
+export function addInventoryItem(
+  data: AppData,
+  name: string,
+  unit: string,
+  quantity: number = 0,
+  lowStockThreshold: number = 0
+): AppData {
   const newItem: InventoryItem = {
     id: uuid(),
     name,
     unit,
     mainQuantity: quantity,
+    lowStockThreshold,
     createdAt: now(),
     updatedAt: now(),
   };
@@ -103,7 +126,7 @@ export function getTechInventory(data: AppData, techId: string): (TechInventory 
       ...ti,
       item: data.inventoryItems.find(i => i.id === ti.itemId)!,
     }))
-    .filter(ti => ti.item); // Filter out any with missing items
+    .filter(ti => ti.item);
 }
 
 export function getAllTechInventory(data: AppData): (TechInventory & { item: InventoryItem; tech: User })[] {
@@ -122,32 +145,27 @@ export function assignInventoryToTech(
   itemId: string,
   quantity: number
 ): AppData {
-  // Validate main inventory has enough
   const item = data.inventoryItems.find(i => i.id === itemId);
   if (!item || item.mainQuantity < quantity) {
     throw new Error('Insufficient main inventory');
   }
 
-  // Deduct from main inventory
   const updatedItems = data.inventoryItems.map(i =>
     i.id === itemId ? { ...i, mainQuantity: i.mainQuantity - quantity, updatedAt: now() } : i
   );
 
-  // Check if tech already has this item
   const existingTechInventory = data.techInventory.find(
     ti => ti.techId === techId && ti.itemId === itemId
   );
 
   let updatedTechInventory: TechInventory[];
   if (existingTechInventory) {
-    // Add to existing balance
     updatedTechInventory = data.techInventory.map(ti =>
       ti.id === existingTechInventory.id
         ? { ...ti, quantity: ti.quantity + quantity, updatedAt: now() }
         : ti
     );
   } else {
-    // Create new tech inventory entry
     const newTechInventory: TechInventory = {
       id: uuid(),
       techId,
@@ -189,30 +207,41 @@ export function createJob(
   clientName: string,
   address: string,
   createdBy: string,
-  description?: string,
-  assignedTechId?: string
+  options: {
+    description?: string;
+    assignedTechId?: string;
+    jobType?: JobType;
+    color?: string;
+    bidStatus?: BidStatus;
+    bidAmount?: number;
+  } = {}
 ): AppData {
+  const counter = data.jobNumberCounter + 1;
+  const tech = options.assignedTechId ? data.users.find(u => u.id === options.assignedTechId) : null;
+  const defaultColor = tech?.color || '#6B7280';
+
   const newJob: Job = {
     id: uuid(),
+    jobNumber: generateJobNumber(counter),
     clientName,
     address,
-    description,
-    assignedTechId,
+    description: options.description,
+    jobType: options.jobType || 'other',
+    color: options.color || defaultColor,
+    assignedTechId: options.assignedTechId,
     status: 'assigned',
+    bidStatus: options.bidStatus,
+    bidAmount: options.bidAmount,
+    isLocked: false,
     createdBy,
     createdAt: now(),
     updatedAt: now(),
   };
 
-  // Log simulated email
-  if (assignedTechId) {
-    const tech = data.users.find(u => u.id === assignedTechId);
-    console.log(`[EMAIL] Job assigned to ${tech?.fullName} (${tech?.email}): ${clientName} at ${address}`);
-  }
-
   return {
     ...data,
     jobs: [...data.jobs, newJob],
+    jobNumberCounter: counter,
   };
 }
 
@@ -228,19 +257,9 @@ export function updateJob(data: AppData, id: string, updates: Partial<Job>): App
 export function updateJobStatus(data: AppData, id: string, status: JobStatus): AppData {
   const updates: Partial<Job> = { status };
 
-  if (status === 'pending_approval') {
+  if (status === 'pending_review') {
     updates.submittedForApprovalAt = now();
-    updates.denialReason = undefined; // Clear any previous denial reason
-
-    // Log simulated email to admins
-    const job = data.jobs.find(j => j.id === id);
-    const tech = data.users.find(u => u.id === job?.assignedTechId);
-    const admins = data.users.filter(u => u.role === 'admin');
-
-    console.log(`[EMAIL] Job submitted for approval - notification sent to admins:`);
-    admins.forEach(admin => {
-      console.log(`  - ${admin.email}: Job "${job?.clientName}" submitted by ${tech?.fullName} for approval`);
-    });
+    updates.changeRequestNotes = undefined;
   }
 
   if (status === 'complete') {
@@ -250,44 +269,37 @@ export function updateJobStatus(data: AppData, id: string, status: JobStatus): A
   return updateJob(data, id, updates);
 }
 
-// Get jobs pending approval
-export function getJobsPendingApproval(data: AppData): Job[] {
-  return data.jobs.filter(j => j.status === 'pending_approval');
+// Get jobs pending review
+export function getJobsPendingReview(data: AppData): Job[] {
+  return data.jobs.filter(j => j.status === 'pending_review');
 }
 
-// Admin approves job completion
-export function approveJobCompletion(data: AppData, jobId: string): AppData {
+// Admin approves job
+export function approveJob(data: AppData, jobId: string, approvedBy: string): AppData {
   const job = data.jobs.find(j => j.id === jobId);
-  if (!job || job.status !== 'pending_approval') {
-    throw new Error('Job not found or not pending approval');
+  if (!job || job.status !== 'pending_review') {
+    throw new Error('Job not found or not pending review');
   }
-
-  // Log simulated email to tech
-  const tech = data.users.find(u => u.id === job.assignedTechId);
-  console.log(`[EMAIL] Job approved - notification sent to tech:`);
-  console.log(`  - ${tech?.email}: Job "${job.clientName}" has been approved and marked complete`);
 
   return updateJob(data, jobId, {
     status: 'complete',
     completedAt: now(),
+    approvedAt: now(),
+    approvedBy,
+    isLocked: true,
   });
 }
 
-// Admin denies job completion
-export function denyJobCompletion(data: AppData, jobId: string, reason: string): AppData {
+// Admin requests changes
+export function requestChanges(data: AppData, jobId: string, note: string): AppData {
   const job = data.jobs.find(j => j.id === jobId);
-  if (!job || job.status !== 'pending_approval') {
-    throw new Error('Job not found or not pending approval');
+  if (!job || job.status !== 'pending_review') {
+    throw new Error('Job not found or not pending review');
   }
-
-  // Log simulated email to tech
-  const tech = data.users.find(u => u.id === job.assignedTechId);
-  console.log(`[EMAIL] Job denied - notification sent to tech:`);
-  console.log(`  - ${tech?.email}: Job "${job.clientName}" was denied. Reason: ${reason}`);
 
   return updateJob(data, jobId, {
     status: 'in_progress',
-    denialReason: reason,
+    changeRequestNotes: note,
     submittedForApprovalAt: undefined,
   });
 }
@@ -349,7 +361,6 @@ export function logJobInventory(
   quantityUsed: number,
   loggedBy: string
 ): AppData {
-  // Find tech's inventory for this item
   const job = data.jobs.find(j => j.id === jobId);
   if (!job || !job.assignedTechId) {
     throw new Error('Job not found or not assigned');
@@ -362,14 +373,12 @@ export function logJobInventory(
     throw new Error('Insufficient tech inventory');
   }
 
-  // Deduct from tech inventory
   const updatedTechInventory = data.techInventory.map(ti =>
     ti.id === techInv.id
       ? { ...ti, quantity: ti.quantity - quantityUsed, updatedAt: now() }
       : ti
   );
 
-  // Add job inventory record
   const newJobInventory: JobInventory = {
     id: uuid(),
     jobId,
@@ -386,35 +395,98 @@ export function logJobInventory(
   };
 }
 
+// ============ JOB CHECKLIST OPERATIONS ============
+
+export function getJobChecklist(data: AppData, jobId: string): JobChecklist | undefined {
+  return data.jobChecklists.find(c => c.jobId === jobId);
+}
+
+export function saveJobChecklist(
+  data: AppData,
+  jobId: string,
+  checklistData: Omit<JobChecklist, 'id' | 'jobId' | 'completedAt'>
+): AppData {
+  const existing = data.jobChecklists.find(c => c.jobId === jobId);
+
+  if (existing) {
+    return {
+      ...data,
+      jobChecklists: data.jobChecklists.map(c =>
+        c.jobId === jobId
+          ? { ...c, ...checklistData, completedAt: now() }
+          : c
+      ),
+    };
+  }
+
+  const newChecklist: JobChecklist = {
+    id: uuid(),
+    jobId,
+    ...checklistData,
+    completedAt: now(),
+  };
+
+  return {
+    ...data,
+    jobChecklists: [...data.jobChecklists, newChecklist],
+  };
+}
+
 // ============ COMPLETION GATE VALIDATION ============
 
 export interface CompletionValidation {
-  hasBeforePhoto: boolean;
-  hasAfterPhoto: boolean;
-  hasInventoryLogged: boolean;
-  canComplete: boolean;
+  hasMinBeforePhotos: boolean;   // minimum 2 before photos
+  hasMinAfterPhotos: boolean;    // minimum 2 after photos
+  hasInventoryLogged: boolean;   // at least 1 item logged
+  hasChecklistCompleted: boolean; // job-type checklist filled out
+  isValid: boolean;
   missingItems: string[];
 }
 
 export function validateJobCompletion(data: AppData, jobId: string): CompletionValidation {
+  const job = data.jobs.find(j => j.id === jobId);
   const beforePhotos = getJobPhotosByType(data, jobId, 'before');
   const afterPhotos = getJobPhotosByType(data, jobId, 'after');
   const inventoryUsed = data.jobInventory.filter(ji => ji.jobId === jobId);
+  const checklist = getJobChecklist(data, jobId);
 
-  const hasBeforePhoto = beforePhotos.length >= 1;
-  const hasAfterPhoto = afterPhotos.length >= 1;
+  const hasMinBeforePhotos = beforePhotos.length >= 2;
+  const hasMinAfterPhotos = afterPhotos.length >= 2;
   const hasInventoryLogged = inventoryUsed.length >= 1;
 
+  // Check checklist completion based on job type
+  let hasChecklistCompleted = false;
+  if (checklist && job) {
+    switch (job.jobType) {
+      case 'tree':
+        hasChecklistCompleted = !!(checklist.treeSize && checklist.treeHeightFt && checklist.treeHeightFt > 0);
+        break;
+      case 'irrigation':
+        hasChecklistCompleted = !!(checklist.valveCount && checklist.valveCount >= 1);
+        break;
+      case 'sod':
+        hasChecklistCompleted = !!(checklist.hasIrrigation !== undefined && checklist.sodType);
+        break;
+      case 'other':
+        hasChecklistCompleted = true; // optional for 'other'
+        break;
+      default:
+        hasChecklistCompleted = true;
+    }
+  }
+
   const missingItems: string[] = [];
-  if (!hasBeforePhoto) missingItems.push('At least 1 "before" photo');
-  if (!hasAfterPhoto) missingItems.push('At least 1 "after" photo');
+  if (!hasMinBeforePhotos) missingItems.push(`Before photos (${beforePhotos.length}/2 uploaded)`);
+  if (!hasMinAfterPhotos) missingItems.push(`After photos (${afterPhotos.length}/2 uploaded)`);
   if (!hasInventoryLogged) missingItems.push('At least 1 inventory item logged');
+  if (!hasChecklistCompleted) missingItems.push('Job checklist completed');
 
   return {
-    hasBeforePhoto,
-    hasAfterPhoto,
+    hasMinBeforePhotos,
+    hasMinAfterPhotos,
     hasInventoryLogged,
-    canComplete: hasBeforePhoto && hasAfterPhoto && hasInventoryLogged,
+    hasChecklistCompleted,
+    isValid: hasMinBeforePhotos && hasMinAfterPhotos && hasInventoryLogged && hasChecklistCompleted,
     missingItems,
   };
 }
