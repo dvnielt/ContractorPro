@@ -6,13 +6,16 @@ import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/Badge';
+import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { JobStatus } from '@/data/types';
 
 type FilterStatus = 'all' | 'assigned' | 'on_the_way' | 'in_progress';
 
 export default function TechDashboard() {
   const { currentUser } = useAuth();
-  const { getJobsByTech, getTechInventory } = useData();
+  const { getJobsByTech, getTechInventory, isLoading } = useData();
+
+  if (isLoading) return <DashboardSkeleton />;
 
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
 
@@ -30,7 +33,8 @@ export default function TechDashboard() {
     in_progress: 0,
     on_the_way: 1,
     assigned: 2,
-    complete: 3,
+    pending_review: 3,
+    complete: 4,
   };
   const sortedJobs = [...filteredJobs].sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
 
