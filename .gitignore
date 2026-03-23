@@ -30,8 +30,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — never commit secrets
+.env
+.env.local
+.env.*.local
+# allow the example template so others know what vars are needed
+!.env.local.example
+
+# Claude Code auto-memory — internal session notes, not for the repo
+memory/
+.claude/settings.local.json
 
 # vercel
 .vercel
