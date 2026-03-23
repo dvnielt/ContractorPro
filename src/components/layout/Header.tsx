@@ -2,22 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/Button';
 
 export function Header() {
   const router = useRouter();
   const { currentUser, logout } = useAuth();
-  const { resetData } = useData();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
-  };
-
-  const handleReset = () => {
-    resetData();
-    window.location.reload();
   };
 
   return (
@@ -27,9 +20,6 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold text-gray-900">FieldFlow</h1>
-            <span className="hidden sm:inline text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              Demo
-            </span>
           </div>
 
           {/* User info and actions */}
@@ -40,13 +30,6 @@ export function Header() {
                   <div className="text-sm font-medium text-gray-900">{currentUser.fullName}</div>
                   <div className="text-xs text-gray-500 capitalize">{currentUser.role}</div>
                 </div>
-                <button
-                  onClick={handleReset}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 hover:bg-gray-100 rounded"
-                  title="Reset demo data"
-                >
-                  Reset
-                </button>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
