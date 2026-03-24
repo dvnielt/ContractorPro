@@ -10,7 +10,7 @@ export function Header() {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = '/login';
+    router.replace('/login');
   };
 
   return (

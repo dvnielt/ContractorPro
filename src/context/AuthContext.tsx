@@ -39,27 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createClient();
 
   useEffect(() => {
-    // Get initial session on mount
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, role, color')
-          .eq('id', user.id)
-          .single();
-        if (!error && profile) setCurrentUser(profileToCurrentUser(profile as Profile));
-      }
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes (token refresh, sign out, etc.)
+    // onAuthStateChange fires INITIAL_SESSION on mount — no need for a separate getUser() call
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
         setIsLoading(false);
         return;
       }
-      if (session?.user) {
+
+      // Fetch profile only on initial load or explicit sign-in — not on every token refresh
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session?.user) {
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('id, email, full_name, role, color')
@@ -67,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
         if (!error && profile) setCurrentUser(profileToCurrentUser(profile as Profile));
       }
+
       setIsLoading(false);
     });
 
@@ -98,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const user = profileToCurrentUser(profile as Profile);
       setCurrentUser(user);
+      setIsLoading(false); // auth state is known immediately after sign-in
       return { error: null, role: user.role };
     }
 
