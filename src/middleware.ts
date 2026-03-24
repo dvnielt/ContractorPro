@@ -41,10 +41,15 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (pathname.startsWith('/admin') && profile?.role !== 'admin') {
+    // No profile row = broken account, send to login to avoid redirect loop
+    if (!profile) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    if (pathname.startsWith('/admin') && profile.role !== 'admin') {
       return NextResponse.redirect(new URL('/tech', request.url));
     }
-    if (pathname.startsWith('/tech') && profile?.role !== 'tech') {
+    if (pathname.startsWith('/tech') && profile.role !== 'tech') {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
   }

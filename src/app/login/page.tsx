@@ -27,7 +27,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/admin');
+    // Let the root page handle role-based redirect
+    router.push('/');
     router.refresh();
   };
 
