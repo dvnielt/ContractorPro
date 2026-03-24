@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "npm run build"
 
 [deploy]
-startCommand = "npm run start"
+startCommand = "node_modules/.bin/next start -p $PORT"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
