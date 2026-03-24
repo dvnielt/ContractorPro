@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { JobStatus, PhotoType, JobType } from '@/data/types';
+import { JobStatus, PhotoType } from '@/data/types';
 import { useToast } from '@/context/ToastContext';
 import imageCompression from 'browser-image-compression';
 
@@ -587,10 +587,13 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
             type="file"
             accept="image/*"
             capture="environment"
+            disabled={isUploading}
             onChange={handlePhotoUpload}
-            className="w-full p-4 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-blue-500"
+            className="w-full p-4 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
-          <p className="text-sm text-slate-400 text-center">Take a photo or select from gallery</p>
+          <p className="text-sm text-slate-400 text-center">
+            {isUploading ? 'Uploading...' : 'Take a photo or select from gallery'}
+          </p>
         </div>
       </Modal>
 

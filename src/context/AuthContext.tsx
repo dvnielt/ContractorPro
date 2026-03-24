@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 
@@ -33,34 +33,53 @@ function profileToCurrentUser(profile: Profile): CurrentUser {
   };
 }
 
+async function fetchProfile(supabase: ReturnType<typeof createClient>, userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, role, color')
+    .eq('id', userId)
+    .single();
+  if (error || !data) return null;
+  return data as Profile;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  // Stable Supabase client reference — createBrowserClient is a singleton per key pair
+  const supabase = useRef(createClient()).current;
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION on mount — no need for a separate getUser() call
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    let mounted = true;
+
+    // getUser() validates the JWT with Supabase servers and ALWAYS resolves.
+    // onAuthStateChange INITIAL_SESSION is NOT guaranteed to fire in all
+    // environments (known issue with @supabase/ssr on Railway/Vercel cold starts).
+    // Using getUser() here prevents the eternal loading spinner.
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!mounted) return;
+      if (user) {
+        const profile = await fetchProfile(supabase, user.id);
+        if (mounted && profile) setCurrentUser(profileToCurrentUser(profile));
+      }
+      if (mounted) setIsLoading(false);
+    });
+
+    // onAuthStateChange handles transitions AFTER initial load.
+    // SIGNED_IN is handled by signIn() which already sets currentUser + isLoading.
+    // INITIAL_SESSION is handled by getUser() above.
+    // TOKEN_REFRESHED needs no action — JWT refreshes silently.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
         setIsLoading(false);
-        return;
       }
-
-      // Fetch profile only on initial load or explicit sign-in — not on every token refresh
-      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session?.user) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, role, color')
-          .eq('id', session.user.id)
-          .single();
-        if (!error && profile) setCurrentUser(profileToCurrentUser(profile as Profile));
-      }
-
-      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const signIn = async (
@@ -70,25 +89,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
 
-    // Fetch profile immediately so the login page can redirect to the correct route
-    // without waiting for onAuthStateChange (which fires asynchronously)
     if (data.user) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, role, color')
-        .eq('id', data.user.id)
-        .single();
+      const profile = await fetchProfile(supabase, data.user.id);
 
-      if (profileError || !profile) {
-        const msg = profileError
-          ? `Profile fetch failed: ${profileError.message} (code: ${profileError.code})`
-          : 'Profile row not found for this user.';
-        return { error: msg };
+      if (!profile) {
+        return { error: 'Profile not found. Contact your admin — your account may not be set up yet.' };
       }
 
-      const user = profileToCurrentUser(profile as Profile);
+      const user = profileToCurrentUser(profile);
       setCurrentUser(user);
-      setIsLoading(false); // auth state is known immediately after sign-in
+      setIsLoading(false); // auth state is known immediately — don't wait for onAuthStateChange
       return { error: null, role: user.role };
     }
 
@@ -98,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error('Sign out error:', error.message);
+    // Immediately clear state so the UI updates before the async SIGNED_OUT event fires
     setCurrentUser(null);
+    setIsLoading(false);
   };
 
   const value: AuthContextType = {

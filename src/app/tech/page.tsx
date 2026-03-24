@@ -14,10 +14,9 @@ type FilterStatus = 'all' | 'assigned' | 'on_the_way' | 'in_progress';
 export default function TechDashboard() {
   const { currentUser } = useAuth();
   const { getJobsByTech, getTechInventory, isLoading } = useData();
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
 
   if (isLoading) return <DashboardSkeleton />;
-
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
 
   const jobs = currentUser ? getJobsByTech(currentUser.id) : [];
   const inventory = currentUser ? getTechInventory(currentUser.id) : [];

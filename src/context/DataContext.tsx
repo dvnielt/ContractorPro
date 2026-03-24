@@ -266,6 +266,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadAll(); }, [loadAll]);
 
   // ─── Real-time subscriptions ──────────────────────────────────────────────
@@ -280,6 +281,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  }, [supabase, loadAll]);
+
+  // Re-fetch all data on explicit sign-in. DataProvider mounts outside AuthProvider,
+  // so the initial loadAll() may run before auth is established on a fresh session,
+  // leaving all lists empty. SIGNED_IN fires after signInWithPassword() completes.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') loadAll();
+    });
+    return () => subscription.unsubscribe();
   }, [supabase, loadAll]);
 
   // ─── User operations ───────────────────────────────────────────────────────
