@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { href: '/tech', label: 'My Jobs', icon: BriefcaseIcon },
-  { href: '/tech/inventory', label: 'Inventory', icon: BoxIcon },
+  { href: '/tech',           label: 'My Jobs',   icon: BriefcaseIcon },
+  { href: '/tech/inventory', label: 'Inventory', icon: BoxIcon       },
 ];
 
 export function TechNav() {
@@ -14,7 +14,7 @@ export function TechNav() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-64 md:border-r md:border-gray-200 md:bg-white md:fixed md:top-16 md:bottom-0">
+      <aside className="hidden md:flex md:flex-col md:w-64 md:border-r md:border-slate-800 md:bg-slate-950 md:fixed md:top-16 md:bottom-0">
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href ||
@@ -24,24 +24,26 @@ export function TechNav() {
                 key={item.href}
                 href={item.href}
                 className={`
-                  flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                  min-h-[44px]
+                  flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px]
                   ${isActive
-                    ? 'bg-green-50 text-green-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent'
                   }
                 `}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="w-5 h-5 flex-shrink-0" />
                 {item.label}
               </Link>
             );
           })}
         </nav>
+        <div className="p-4 border-t border-slate-800">
+          <p className="text-xs text-slate-600">FieldFlow v1.0</p>
+        </div>
       </aside>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 z-40">
         <div className="flex justify-around">
           {navItems.map((item) => {
             const isActive = pathname === item.href ||
@@ -51,8 +53,8 @@ export function TechNav() {
                 key={item.href}
                 href={item.href}
                 className={`
-                  flex flex-col items-center gap-1 px-4 py-3 text-xs font-medium min-w-[64px]
-                  ${isActive ? 'text-green-600' : 'text-gray-500'}
+                  flex flex-col items-center gap-1 px-4 py-3 text-xs font-medium min-w-[64px] transition-colors
+                  ${isActive ? 'text-emerald-400' : 'text-slate-500'}
                 `}
               >
                 <item.icon className="w-5 h-5" />
@@ -66,7 +68,6 @@ export function TechNav() {
   );
 }
 
-// Icons
 function BriefcaseIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
