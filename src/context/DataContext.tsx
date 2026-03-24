@@ -124,12 +124,13 @@ const emptyData: AppData = {
 
 function validateCompletion(data: AppData, jobId: string): CompletionValidation {
   const job = data.jobs.find(j => j.id === jobId);
-  if (!job) return { isValid: false, hasMinBeforePhotos: false, hasMinAfterPhotos: false, hasInventoryLogged: false, hasChecklistCompleted: false, missingItems: ['Job not found'] };
+  if (!job) return { isValid: false, hasMinBeforePhotos: false, hasMinAfterPhotos: false, hasInventoryLogged: false, hasChecklistCompleted: false, hasNotes: false, missingItems: ['Job not found'] };
 
   const photos = data.jobPhotos.filter(p => p.jobId === jobId);
   const beforeCount = photos.filter(p => p.photoType === 'before').length;
   const afterCount = photos.filter(p => p.photoType === 'after').length;
   const hasInventory = data.jobInventory.some(ji => ji.jobId === jobId);
+  const hasNotes = !!(job.notes?.trim());
   const checklist = data.jobChecklists.find(c => c.jobId === jobId);
 
   let checklistOk = false;
@@ -140,7 +141,8 @@ function validateCompletion(data: AppData, jobId: string): CompletionValidation 
   } else if (job.jobType === 'sod') {
     checklistOk = checklist?.hasIrrigation !== undefined && !!(checklist?.sodType);
   } else {
-    checklistOk = true; // 'other' — no required fields
+    // 'other' jobs require customNotes to be non-empty
+    checklistOk = !!(checklist?.customNotes?.trim());
   }
 
   const hasMinBefore = beforeCount >= 2;
@@ -150,13 +152,15 @@ function validateCompletion(data: AppData, jobId: string): CompletionValidation 
   if (!hasMinAfter) missingItems.push(`After photos (${photos.filter(p => p.photoType === 'after').length}/2)`);
   if (!hasInventory) missingItems.push('At least 1 inventory item logged');
   if (!checklistOk) missingItems.push('Job checklist completed');
+  if (!hasNotes) missingItems.push('Job notes (cannot be empty)');
 
   return {
-    isValid: hasMinBefore && hasMinAfter && hasInventory && checklistOk,
+    isValid: hasMinBefore && hasMinAfter && hasInventory && checklistOk && hasNotes,
     hasMinBeforePhotos: hasMinBefore,
     hasMinAfterPhotos: hasMinAfter,
     hasInventoryLogged: hasInventory,
     hasChecklistCompleted: checklistOk,
+    hasNotes,
     missingItems,
   };
 }
@@ -224,7 +228,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       { data: jobInv },
       { data: checklists },
     ] = await Promise.all([
-      supabase.from('profiles').select('id, email, full_name, role, color, created_at, updated_at'),
+      supabase.from('profiles').select('id, full_name, role, color, created_at, updated_at'),
       supabase.from('inventory_items').select('id, name, unit, main_quantity, low_stock_threshold, created_at, updated_at'),
       supabase.from('tech_inventory').select('id, tech_id, item_id, quantity, created_at, updated_at'),
       supabase.from('jobs').select('id, job_number, client_name, address, description, job_type, assigned_tech_id, color, status, bid_status, bid_amount, notes, change_request_notes, completed_at, approved_at, approved_by, is_locked, created_by, created_at, updated_at').order('created_at', { ascending: false }),

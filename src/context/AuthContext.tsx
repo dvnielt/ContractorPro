@@ -27,7 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 function profileToCurrentUser(profile: Profile): CurrentUser {
   return {
     id: profile.id,
-    email: profile.email,
+    email: profile.email ?? '',
     fullName: profile.full_name,
     role: profile.role,
     color: profile.color,
@@ -78,7 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('Sign out error:', error.message);
+    // Clear local state regardless — the hard redirect in Header handles cleanup
     setCurrentUser(null);
   };
 
