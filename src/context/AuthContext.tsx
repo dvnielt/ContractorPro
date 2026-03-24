@@ -90,7 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (profileError || !profile) {
-        return { error: 'Account setup incomplete. Contact your administrator.' };
+        const msg = profileError
+          ? `Profile fetch failed: ${profileError.message} (code: ${profileError.code})`
+          : 'Profile row not found for this user.';
+        return { error: msg };
       }
 
       const user = profileToCurrentUser(profile as Profile);
