@@ -147,7 +147,7 @@ export default function CreateJobPage() {
 
             {/* Job Color */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Job Color
               </label>
               <div className="flex gap-2 flex-wrap">

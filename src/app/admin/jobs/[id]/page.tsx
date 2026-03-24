@@ -25,8 +25,6 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
     getJobPhotos,
     getJobInventoryUsage,
     getJobChecklist,
-    approveJob,
-    requestChanges,
     updateJob,
     getTechs,
   } = useData();
@@ -36,6 +34,7 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [changeNote, setChangeNote] = useState('');
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [isActioning, setIsActioning] = useState(false);
   const [editingBid, setEditingBid] = useState(false);
   const [editingJob, setEditingJob] = useState(false);
   const [editClientName, setEditClientName] = useState('');
@@ -51,8 +50,8 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
   if (!job) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Job not found</h2>
-        <Link href="/admin/jobs" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
+        <h2 className="text-xl font-semibold text-slate-100">Job not found</h2>
+        <Link href="/admin/jobs" className="text-blue-600 hover:text-blue-400 mt-2 inline-block">
           Back to Jobs
         </Link>
       </div>
@@ -109,19 +108,44 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
     { value: 'sod', label: 'Sod' },
   ];
 
-  const handleApprove = () => {
-    if (!currentUser) return;
-    approveJob(job.id, currentUser.id);
-    setShowApproveModal(false);
-    router.push('/admin/jobs');
+  const handleApprove = async () => {
+    setIsActioning(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/approve`, { method: 'POST' });
+      if (!res.ok) {
+        const { error } = await res.json();
+        toast(error ?? 'Approval failed', 'error');
+        return;
+      }
+      setShowApproveModal(false);
+      router.push('/admin/jobs');
+      router.refresh();
+    } finally {
+      setIsActioning(false);
+    }
   };
 
-  const handleRequestChanges = () => {
+  const handleRequestChanges = async () => {
     if (!changeNote.trim()) return;
-    requestChanges(job.id, changeNote.trim());
-    setShowChangeModal(false);
-    setChangeNote('');
-    router.push('/admin/jobs');
+    setIsActioning(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/request-changes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: changeNote.trim() }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        toast(error ?? 'Request failed', 'error');
+        return;
+      }
+      setShowChangeModal(false);
+      setChangeNote('');
+      router.push('/admin/jobs');
+      router.refresh();
+    } finally {
+      setIsActioning(false);
+    }
   };
 
   const handleSaveBid = () => {
@@ -149,17 +173,17 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {job.changeRequestNotes && job.status === 'in_progress' && (
-        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <div className="font-semibold text-orange-800 mb-1">Changes Requested</div>
-          <p className="text-orange-700 text-sm">{job.changeRequestNotes}</p>
+        <div className="p-4 bg-orange-900/20 border border-orange-800/50 rounded-lg">
+          <div className="font-semibold text-orange-300 mb-1">Changes Requested</div>
+          <p className="text-orange-400 text-sm">{job.changeRequestNotes}</p>
         </div>
       )}
 
       {isComplete && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+        <div className="p-4 bg-green-900/20 border border-green-800/50 rounded-lg flex items-center gap-2">
           <span className="text-green-600 text-lg">✓</span>
           <div>
-            <div className="font-semibold text-green-800">Job Complete</div>
+            <div className="font-semibold text-green-300">Job Complete</div>
             {job.approvedAt && (
               <div className="text-sm text-green-600">
                 Approved {new Date(job.approvedAt).toLocaleString()}
@@ -196,7 +220,7 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
                 <Select label="Assigned Tech" options={techOptions} value={editTechId} onChange={(e) => setEditTechId(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Job Color</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Job Color</label>
                 <div className="flex gap-2 flex-wrap">
                   {TECH_COLOR_PALETTE.map(({ value, label }) => (
                     <button
@@ -216,16 +240,16 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
               <div>
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: job.color }} />
-                  <h1 className="text-xl font-bold text-gray-900">{job.clientName}</h1>
-                  <span className="text-sm text-gray-400 font-mono">{job.jobNumber}</span>
+                  <h1 className="text-xl font-bold text-slate-100">{job.clientName}</h1>
+                  <span className="text-sm text-slate-500 font-mono">{job.jobNumber}</span>
                   <StatusBadge status={job.status} />
                   <JobTypeBadge jobType={job.jobType} />
                   {job.bidStatus && <BidStatusBadge bidStatus={job.bidStatus} />}
                 </div>
-                <p className="text-gray-600">{job.address}</p>
-                {job.description && <p className="text-gray-500 mt-2 text-sm">{job.description}</p>}
+                <p className="text-slate-400">{job.address}</p>
+                {job.description && <p className="text-slate-400 mt-2 text-sm">{job.description}</p>}
               </div>
-              <div className="text-sm text-gray-500 sm:text-right shrink-0">
+              <div className="text-sm text-slate-400 sm:text-right shrink-0">
                 <div>Created {new Date(job.createdAt).toLocaleString()}</div>
                 {creator && <div>By {creator.fullName}</div>}
                 {job.completedAt && (
@@ -244,8 +268,8 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
           <CardContent>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <div className="font-semibold text-gray-900">Ready for Review</div>
-                <div className="text-sm text-gray-500">
+                <div className="font-semibold text-slate-100">Ready for Review</div>
+                <div className="text-sm text-slate-400">
                   Submitted by {tech?.fullName} — review photos, inventory, and checklist below.
                 </div>
               </div>
@@ -269,15 +293,15 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
                 className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
                 style={{ backgroundColor: tech.color }}
               >
-                {tech.fullName.split(' ').map((n: string) => n[0]).join('')}
+                {tech.fullName.split(' ').filter(Boolean).map(n => n.charAt(0)).join('')}
               </div>
               <div>
-                <div className="font-medium text-gray-900">{tech.fullName}</div>
-                <div className="text-sm text-gray-500">{tech.email}</div>
+                <div className="font-medium text-slate-100">{tech.fullName}</div>
+                <div className="text-sm text-slate-400">{tech.email}</div>
               </div>
             </div>
           ) : (
-            <p className="text-gray-500">No tech assigned</p>
+            <p className="text-slate-400">No tech assigned</p>
           )}
         </CardContent>
       </Card>
@@ -314,13 +338,13 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
                 <>
                   <BidStatusBadge bidStatus={job.bidStatus} />
                   {job.bidAmount && (
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-slate-100">
                       {'$'}{job.bidAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   )}
                 </>
               ) : (
-                <span className="text-gray-400 text-sm">No bid information</span>
+                <span className="text-slate-500 text-sm">No bid information</span>
               )}
             </div>
           )}
@@ -330,7 +354,7 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
       {job.notes && (
         <Card>
           <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
-          <CardContent><p className="text-gray-700 whitespace-pre-wrap">{job.notes}</p></CardContent>
+          <CardContent><p className="text-slate-300 whitespace-pre-wrap">{job.notes}</p></CardContent>
         </Card>
       )}
 
@@ -341,37 +365,37 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
             <div className="space-y-2 text-sm">
               {job.jobType === 'tree' && (
                 <>
-                  <div className="flex justify-between py-1 border-b border-gray-100">
-                    <span className="text-gray-500">Tree Size</span>
+                  <div className="flex justify-between py-1 border-b border-slate-800">
+                    <span className="text-slate-400">Tree Size</span>
                     <span className="font-medium capitalize">{checklist.treeSize}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="text-gray-500">Tree Height</span>
+                    <span className="text-slate-400">Tree Height</span>
                     <span className="font-medium">{checklist.treeHeightFt} ft</span>
                   </div>
                 </>
               )}
               {job.jobType === 'irrigation' && (
                 <div className="flex justify-between py-1">
-                  <span className="text-gray-500">Valve Count</span>
+                  <span className="text-slate-400">Valve Count</span>
                   <span className="font-medium">{checklist.valveCount}</span>
                 </div>
               )}
               {job.jobType === 'sod' && (
                 <>
-                  <div className="flex justify-between py-1 border-b border-gray-100">
-                    <span className="text-gray-500">Has Irrigation</span>
+                  <div className="flex justify-between py-1 border-b border-slate-800">
+                    <span className="text-slate-400">Has Irrigation</span>
                     <span className="font-medium">{checklist.hasIrrigation ? 'Yes' : 'No'}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="text-gray-500">Sod Type</span>
+                    <span className="text-slate-400">Sod Type</span>
                     <span className="font-medium">{checklist.sodType}</span>
                   </div>
                 </>
               )}
               {job.jobType === 'other' && checklist.customNotes && (
                 <div>
-                  <span className="text-gray-500 block mb-1">Notes</span>
+                  <span className="text-slate-400 block mb-1">Notes</span>
                   <p className="font-medium">{checklist.customNotes}</p>
                 </div>
               )}
@@ -390,7 +414,7 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
             <CardHeader><CardTitle>{label} ({photoList.length})</CardTitle></CardHeader>
             <CardContent>
               {photoList.length === 0 ? (
-                <p className="text-gray-400 text-center py-4 text-sm">None</p>
+                <p className="text-slate-500 text-center py-4 text-sm">None</p>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   {photoList.map((photo) => (
@@ -407,15 +431,15 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
         <CardHeader><CardTitle>Inventory Used ({inventoryUsed.length})</CardTitle></CardHeader>
         <CardContent>
           {inventoryUsed.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No inventory logged</p>
+            <p className="text-slate-400 text-center py-4">No inventory logged</p>
           ) : (
             <div className="space-y-2">
               {inventoryUsed.map((usage) => (
-                <div key={usage.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium text-gray-900">{usage.item.name}</span>
+                <div key={usage.id} className="flex justify-between items-center p-3 bg-slate-950 rounded-lg">
+                  <span className="font-medium text-slate-100">{usage.item.name}</span>
                   <span>
                     <span className="font-medium">{usage.quantityUsed}</span>
-                    <span className="text-gray-500 ml-1">{usage.item.unit}</span>
+                    <span className="text-slate-400 ml-1">{usage.item.unit}</span>
                   </span>
                 </div>
               ))}
@@ -431,13 +455,13 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowApproveModal(false)}>Cancel</Button>
-            <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleApprove}>
-              Approve & Complete
+            <Button className="bg-green-600 hover:bg-green-500 text-white" onClick={handleApprove} disabled={isActioning}>
+              {isActioning ? 'Approving…' : 'Approve & Complete'}
             </Button>
           </>
         }
       >
-        <p className="text-gray-700">
+        <p className="text-slate-300">
           Are you sure? This job will be marked complete and locked.
           {tech && ` ${tech.fullName} will be notified.`}
         </p>
@@ -455,17 +479,17 @@ export default function AdminJobDetailPage({ params }: { params: Promise<{ id: s
               onClick={handleRequestChanges}
               disabled={!changeNote.trim()}
             >
-              Send Request
+              {isActioning ? 'Sending…' : 'Send Request'}
             </Button>
           </>
         }
       >
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-400">
             Explain what needs to be fixed. {tech?.fullName} will be notified and the job returns to In Progress.
           </p>
           <textarea
-            className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+            className="w-full border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
             placeholder="What needs to be corrected or added?"
             value={changeNote}
             onChange={(e) => setChangeNote(e.target.value)}

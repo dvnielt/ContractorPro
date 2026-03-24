@@ -62,17 +62,17 @@ export default function AdminInventoryPage() {
   const lowStockItems = items.filter(i => i.mainQuantity <= i.lowStockThreshold);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
+        <h1 className="text-2xl font-bold text-slate-100">Inventory</h1>
         <Button onClick={() => setShowAddModal(true)}>Add Item</Button>
       </div>
 
       {/* Low Stock Alert */}
       {lowStockItems.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-red-700 font-medium mb-1">
-            <span className="w-2 h-2 bg-red-500 rounded-full inline-block" />
+        <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-red-400 font-medium mb-1">
+            <span className="w-2 h-2 bg-red-900/200 rounded-full inline-block" />
             {lowStockItems.length} item{lowStockItems.length > 1 ? 's' : ''} low on stock
           </div>
           <div className="text-sm text-red-600">{lowStockItems.map(i => i.name).join(', ')}</div>
@@ -86,7 +86,7 @@ export default function AdminInventoryPage() {
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No inventory items</p>
+            <p className="text-slate-400 text-center py-4">No inventory items</p>
           ) : (
             <div className="space-y-2">
               {items.map((item) => {
@@ -94,17 +94,17 @@ export default function AdminInventoryPage() {
                 return (
                 <div
                   key={item.id}
-                  className={`flex justify-between items-center p-4 rounded-lg cursor-pointer ${isLow ? 'bg-red-50 hover:bg-red-100 border border-red-200' : 'bg-gray-50 hover:bg-gray-100'}`}
+                  className={`flex justify-between items-center p-4 rounded-lg cursor-pointer ${isLow ? 'bg-red-900/20 hover:bg-red-100 border border-red-800/50' : 'bg-slate-950 hover:bg-slate-800'}`}
                   onClick={() => openEdit(item)}
                 >
                   <div>
-                    <div className="font-medium text-gray-900">{item.name}</div>
-                    <div className="text-sm text-gray-500">{item.unit}</div>
+                    <div className="font-medium text-slate-100">{item.name}</div>
+                    <div className="text-sm text-slate-400">{item.unit}</div>
                     {isLow && <div className="text-xs text-red-600 font-medium mt-0.5">Low stock (threshold: {item.lowStockThreshold})</div>}
                   </div>
                   <div className="text-right">
-                    <div className={`text-xl font-bold ${isLow ? 'text-red-600' : 'text-gray-900'}`}>{item.mainQuantity}</div>
-                    <div className="text-xs text-gray-500">in stock</div>
+                    <div className={`text-xl font-bold ${isLow ? 'text-red-600' : 'text-slate-100'}`}>{item.mainQuantity}</div>
+                    <div className="text-xs text-slate-400">in stock</div>
                   </div>
                 </div>
                 );

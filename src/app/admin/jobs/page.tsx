@@ -66,9 +66,9 @@ export default function AdminJobsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
+        <h1 className="text-2xl font-bold text-slate-100">Jobs</h1>
         <Link href="/admin/jobs/new">
           <Button>+ New Job</Button>
         </Link>
@@ -102,15 +102,15 @@ export default function AdminJobsPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             title="From date"
           />
-          <span className="text-gray-400 text-sm">to</span>
+          <span className="text-slate-500 text-sm">to</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             title="To date"
           />
           {(dateFrom || dateTo) && (
@@ -121,17 +121,19 @@ export default function AdminJobsPage() {
         </div>
       </div>
 
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-slate-400">
         {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''}
       </div>
 
       {/* Jobs List */}
       {filteredJobs.length === 0 ? (
-        <Card>
-          <div className="text-center py-8 text-gray-500">
-            No jobs found matching your filters
-          </div>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-16 text-slate-500 animate-fade-in">
+          <svg className="w-12 h-12 mb-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p className="text-sm font-medium">No jobs found</p>
+          <p className="text-xs mt-1 text-slate-600">Try adjusting your filters</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {filteredJobs.map((job) => {
@@ -147,18 +149,18 @@ export default function AdminJobsPage() {
                           className="w-3 h-3 rounded-full shrink-0"
                           style={{ backgroundColor: job.color }}
                         />
-                        <span className="font-medium text-gray-900">{job.clientName}</span>
-                        <span className="text-xs text-gray-400 font-mono">{job.jobNumber}</span>
+                        <span className="font-medium text-slate-100">{job.clientName}</span>
+                        <span className="text-xs text-slate-500 font-mono">{job.jobNumber}</span>
                         <StatusBadge status={job.status} />
                         <JobTypeBadge jobType={job.jobType} />
                         {job.bidStatus && <BidStatusBadge bidStatus={job.bidStatus} />}
                       </div>
-                      <div className="text-sm text-gray-600 truncate">{job.address}</div>
+                      <div className="text-sm text-slate-400 truncate">{job.address}</div>
                       {job.description && (
-                        <div className="text-sm text-gray-500 truncate mt-1">{job.description}</div>
+                        <div className="text-sm text-slate-400 truncate mt-1">{job.description}</div>
                       )}
                     </div>
-                    <div className="text-sm text-gray-500 sm:text-right shrink-0">
+                    <div className="text-sm text-slate-400 sm:text-right shrink-0">
                       {tech ? (
                         <div className="flex items-center gap-2 sm:justify-end">
                           <div
@@ -167,12 +169,12 @@ export default function AdminJobsPage() {
                           >
                             {tech.fullName[0]}
                           </div>
-                          <span className="font-medium text-gray-700">{tech.fullName}</span>
+                          <span className="font-medium text-slate-300">{tech.fullName}</span>
                         </div>
                       ) : (
-                        <div className="text-gray-400">Unassigned</div>
+                        <div className="text-slate-500">Unassigned</div>
                       )}
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-slate-500 mt-1">
                         {new Date(job.createdAt).toLocaleDateString()}
                       </div>
                     </div>

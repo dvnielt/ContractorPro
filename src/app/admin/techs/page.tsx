@@ -65,8 +65,8 @@ export default function AdminTechsPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Technicians</h1>
+    <div className="space-y-6 animate-fade-in">
+      <h1 className="text-2xl font-bold text-slate-100">Technicians</h1>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Tech List */}
@@ -83,8 +83,8 @@ export default function AdminTechsPage() {
                     onClick={() => setSelectedTechId(tech.id)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       selectedTechId === tech.id
-                        ? 'bg-blue-50 border-2 border-blue-500'
-                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                        ? 'bg-blue-900/20 border-2 border-blue-500'
+                        : 'bg-slate-950 hover:bg-slate-800 border-2 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -95,8 +95,7 @@ export default function AdminTechsPage() {
                         {tech.fullName.charAt(0)}
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{tech.fullName}</div>
-                        <div className="text-sm text-gray-500">{tech.email}</div>
+                        <div className="font-medium text-slate-100">{tech.fullName}</div>
                       </div>
                     </div>
                   </button>
@@ -123,12 +122,11 @@ export default function AdminTechsPage() {
                     {selectedTech.fullName.charAt(0)}
                   </div>
                   <div>
-                    <div className="font-semibold text-lg text-gray-900">{selectedTech.fullName}</div>
-                    <div className="text-sm text-gray-500">{selectedTech.email}</div>
+                    <div className="font-semibold text-lg text-slate-100">{selectedTech.fullName}</div>
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-700 mb-2">Color</div>
+                  <div className="text-sm font-medium text-slate-300 mb-2">Color</div>
                   <div className="flex flex-wrap gap-2">
                     {TECH_COLOR_PALETTE.map((c) => (
                       <button
@@ -154,7 +152,7 @@ export default function AdminTechsPage() {
               </CardHeader>
               <CardContent>
                 {techInventory.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">
+                  <p className="text-slate-400 text-center py-8">
                     No inventory assigned to this tech
                   </p>
                 ) : (
@@ -162,13 +160,13 @@ export default function AdminTechsPage() {
                     {techInventory.map((inv) => (
                       <div
                         key={inv.id}
-                        className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
+                        className="flex justify-between items-center p-4 bg-slate-950 rounded-lg"
                       >
                         <div>
-                          <div className="font-medium text-gray-900">{inv.item.name}</div>
-                          <div className="text-sm text-gray-500">{inv.item.unit}</div>
+                          <div className="font-medium text-slate-100">{inv.item.name}</div>
+                          <div className="text-sm text-slate-400">{inv.item.unit}</div>
                         </div>
-                        <div className="text-xl font-bold text-gray-900">
+                        <div className="text-xl font-bold text-slate-100">
                           {inv.quantity}
                         </div>
                       </div>
@@ -180,7 +178,7 @@ export default function AdminTechsPage() {
             </>
           ) : (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
+              <CardContent className="py-12 text-center text-slate-400">
                 Select a tech to view their inventory
               </CardContent>
             </Card>

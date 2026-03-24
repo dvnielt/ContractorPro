@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
   const statusCounts = jobs.reduce((acc, job) => {
     acc[job.status] = (acc[job.status] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, { assigned: 0, on_the_way: 0, in_progress: 0, pending_review: 0, complete: 0 } as Record<JobStatus, number>);
 
   const pieData = Object.entries(statusCounts).map(([status, count]) => ({
     name: status.replace(/_/g, ' '),
@@ -81,10 +81,10 @@ export default function AnalyticsPage() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const inventoryUsageMap = data.jobInventory.reduce((acc, ji) => {
+  const inventoryUsageMap = data.jobInventory.reduce((acc: Record<string, number>, ji) => {
     acc[ji.itemId] = (acc[ji.itemId] || 0) + ji.quantityUsed;
     return acc;
-  }, {} as Record<string, number>);
+  }, {});
 
   const topInventory = inventoryItems
     .map(item => ({
@@ -133,9 +133,9 @@ export default function AnalyticsPage() {
   }).sort((a, b) => b.completed - a.completed);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <h1 className="text-2xl font-bold text-slate-100">Analytics</h1>
         <Button variant="secondary" onClick={handleExportCSV}>Export CSV</Button>
       </div>
 
@@ -143,20 +143,20 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{completedJobs.length}</div>
-            <div className="text-sm text-gray-500">Total Completed</div>
+            <div className="text-3xl font-bold text-slate-100">{completedJobs.length}</div>
+            <div className="text-sm text-slate-400">Total Completed</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">{completedThisWeek}</div>
-            <div className="text-sm text-gray-500">Completed This Week</div>
+            <div className="text-sm text-slate-400">Completed This Week</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">{completedThisMonth}</div>
-            <div className="text-sm text-gray-500">Completed This Month</div>
+            <div className="text-sm text-slate-400">Completed This Month</div>
           </CardContent>
         </Card>
         <Card>
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
             <div className="text-3xl font-bold text-purple-600">
               {avgCompletionHours > 0 ? avgCompletionHours.toFixed(1) + 'h' : '—'}
             </div>
-            <div className="text-sm text-gray-500">Avg Completion Time</div>
+            <div className="text-sm text-slate-400">Avg Completion Time</div>
           </CardContent>
         </Card>
       </div>
@@ -177,7 +177,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No job data</p>
+              <p className="text-slate-500 text-center py-8">No job data</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -255,11 +255,11 @@ export default function AnalyticsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 font-medium text-gray-500">Item</th>
-                  <th className="text-right py-2 font-medium text-gray-500">Used (all time)</th>
-                  <th className="text-right py-2 font-medium text-gray-500">Main Stock</th>
-                  <th className="text-right py-2 font-medium text-gray-500">Unit</th>
+                <tr className="border-b border-slate-800">
+                  <th className="text-left py-2 font-medium text-slate-400">Item</th>
+                  <th className="text-right py-2 font-medium text-slate-400">Used (all time)</th>
+                  <th className="text-right py-2 font-medium text-slate-400">Main Stock</th>
+                  <th className="text-right py-2 font-medium text-slate-400">Unit</th>
                 </tr>
               </thead>
               <tbody>
@@ -267,14 +267,14 @@ export default function AnalyticsPage() {
                   const used = inventoryUsageMap[item.id] || 0;
                   const isLow = item.mainQuantity <= item.lowStockThreshold;
                   return (
-                    <tr key={item.id} className="border-b border-gray-100">
-                      <td className="py-2 font-medium text-gray-900">{item.name}</td>
-                      <td className="py-2 text-right text-gray-600">{used}</td>
-                      <td className={`py-2 text-right font-medium ${isLow ? 'text-red-600' : 'text-gray-900'}`}>
+                    <tr key={item.id} className="border-b border-slate-800">
+                      <td className="py-2 font-medium text-slate-100">{item.name}</td>
+                      <td className="py-2 text-right text-slate-400">{used}</td>
+                      <td className={`py-2 text-right font-medium ${isLow ? 'text-red-600' : 'text-slate-100'}`}>
                         {item.mainQuantity}
                         {isLow && <span className="ml-1 text-xs">(low)</span>}
                       </td>
-                      <td className="py-2 text-right text-gray-500">{item.unit}</td>
+                      <td className="py-2 text-right text-slate-400">{item.unit}</td>
                     </tr>
                   );
                 })}
@@ -292,27 +292,27 @@ export default function AnalyticsPage() {
         <CardContent>
           <div className="space-y-3">
             {techPerformance.map(({ tech, totalJobs: total, completed, active }) => (
-              <div key={tech.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={tech.id} className="flex items-center justify-between p-3 bg-slate-950 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-medium"
                     style={{ backgroundColor: tech.color }}
                   >
-                    {tech.fullName.split(' ').map(n => n[0]).join('')}
+                    {tech.fullName.split(' ').filter(Boolean).map(n => n.charAt(0)).join('')}
                   </div>
                   <div>
-                    <div className="font-medium text-gray-900">{tech.fullName}</div>
-                    <div className="text-xs text-gray-500">{total} total jobs</div>
+                    <div className="font-medium text-slate-100">{tech.fullName}</div>
+                    <div className="text-xs text-slate-400">{total} total jobs</div>
                   </div>
                 </div>
                 <div className="flex gap-4 text-right">
                   <div>
                     <div className="font-bold text-green-600">{completed}</div>
-                    <div className="text-xs text-gray-500">Completed</div>
+                    <div className="text-xs text-slate-400">Completed</div>
                   </div>
                   <div>
                     <div className="font-bold text-yellow-600">{active}</div>
-                    <div className="text-xs text-gray-500">Active</div>
+                    <div className="text-xs text-slate-400">Active</div>
                   </div>
                 </div>
               </div>
