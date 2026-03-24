@@ -27,22 +27,31 @@ export default function LoginPage() {
       return;
     }
 
-    // Redirect is handled by middleware / layout guard
     router.push('/admin');
     router.refresh();
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">FieldFlow</h1>
-          <p className="text-gray-600 mt-2">Sign in to continue</p>
+    <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center p-4">
+      {/* Logo */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span className="text-2xl font-bold text-slate-100 tracking-tight">FieldFlow</span>
+      </div>
+
+      <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl shadow-black/50 p-8 w-full max-w-sm">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-semibold text-slate-100">Sign in</h2>
+          <p className="text-slate-500 text-sm mt-1">Enter your credentials to continue</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1">
               Email
             </label>
             <input
@@ -51,14 +60,14 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
               placeholder="you@company.com"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1">
               Password
             </label>
             <input
@@ -67,14 +76,14 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
               placeholder="••••••••"
               required
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-400 bg-red-900/20 border border-red-800/50 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
@@ -82,11 +91,33 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2.5 rounded-lg transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:text-blue-400 text-white font-medium py-2.5 rounded-lg transition-colors min-h-[44px]"
           >
             {isLoading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <div className="mt-6 pt-5 border-t border-slate-800">
+          <p className="text-xs text-slate-600 text-center mb-3">Demo credentials (password: Fieldflow2026)</p>
+          <div className="space-y-1.5">
+            {[
+              { label: 'Admin', email: 'danielthomasdev11@gmail.com' },
+              { label: 'Tech 1', email: 'tech1@test.com' },
+              { label: 'Tech 2', email: 'tech2@test.com' },
+              { label: 'Tech 3', email: 'tech3@test.com' },
+            ].map(({ label, email: demoEmail }) => (
+              <button
+                key={demoEmail}
+                type="button"
+                onClick={() => { setEmail(demoEmail); setPassword('Fieldflow2026'); }}
+                className="w-full text-left px-3 py-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 transition-colors"
+              >
+                <span className="text-xs font-medium text-slate-400">{label}</span>
+                <span className="text-xs text-slate-600 ml-2">{demoEmail}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
