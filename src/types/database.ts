@@ -7,7 +7,7 @@ export type TransactionType = 'add_to_main' | 'assign_to_tech' | 'job_usage';
 
 export interface Profile {
   id: string;
-  email: string;
+  email?: string;
   full_name: string;
   role: UserRole;
   color: string;

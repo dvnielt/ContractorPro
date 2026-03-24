@@ -439,6 +439,7 @@ export interface CompletionValidation {
   hasMinAfterPhotos: boolean;    // minimum 2 after photos
   hasInventoryLogged: boolean;   // at least 1 item logged
   hasChecklistCompleted: boolean; // job-type checklist filled out
+  hasNotes: boolean;              // job notes field is not empty
   isValid: boolean;
   missingItems: string[];
 }
@@ -453,6 +454,7 @@ export function validateJobCompletion(data: AppData, jobId: string): CompletionV
   const hasMinBeforePhotos = beforePhotos.length >= 2;
   const hasMinAfterPhotos = afterPhotos.length >= 2;
   const hasInventoryLogged = inventoryUsed.length >= 1;
+  const hasNotes = !!(job?.notes?.trim());
 
   // Check checklist completion based on job type
   let hasChecklistCompleted = false;
@@ -468,7 +470,8 @@ export function validateJobCompletion(data: AppData, jobId: string): CompletionV
         hasChecklistCompleted = !!(checklist.hasIrrigation !== undefined && checklist.sodType);
         break;
       case 'other':
-        hasChecklistCompleted = true; // optional for 'other'
+        // NOTE: 'other' jobs require customNotes to be non-empty
+        hasChecklistCompleted = !!(checklist.customNotes?.trim());
         break;
       default:
         hasChecklistCompleted = true;
@@ -480,13 +483,15 @@ export function validateJobCompletion(data: AppData, jobId: string): CompletionV
   if (!hasMinAfterPhotos) missingItems.push(`After photos (${afterPhotos.length}/2 uploaded)`);
   if (!hasInventoryLogged) missingItems.push('At least 1 inventory item logged');
   if (!hasChecklistCompleted) missingItems.push('Job checklist completed');
+  if (!hasNotes) missingItems.push('Job notes (cannot be empty)');
 
   return {
     hasMinBeforePhotos,
     hasMinAfterPhotos,
     hasInventoryLogged,
     hasChecklistCompleted,
-    isValid: hasMinBeforePhotos && hasMinAfterPhotos && hasInventoryLogged && hasChecklistCompleted,
+    hasNotes,
+    isValid: hasMinBeforePhotos && hasMinAfterPhotos && hasInventoryLogged && hasChecklistCompleted && hasNotes,
     missingItems,
   };
 }

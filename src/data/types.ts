@@ -3,7 +3,7 @@ export type UserRole = 'admin' | 'tech';
 
 export interface User {
   id: string;
-  email: string;
+  email?: string; // only available for own profile (admin auth context)
   fullName: string;
   role: UserRole;
   color: string; // hex color for color coding
