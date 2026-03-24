@@ -59,11 +59,13 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
   const [hasIrrigation, setHasIrrigation] = useState<boolean | null>(null);
   const [sodType, setSodType] = useState('');
   const [customNotes, setCustomNotes] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!job) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Job not found</h2>
+        <h2 className="text-xl font-semibold text-slate-100">Job not found</h2>
         <Button variant="ghost" onClick={() => router.back()} className="mt-4">Go Back</Button>
       </div>
     );
@@ -118,9 +120,6 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
       setIsSubmitting(false);
     }
   };
-
-  const [isUploading, setIsUploading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -241,19 +240,19 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Change Request Banner */}
       {job.changeRequestNotes && job.status === 'in_progress' && (
-        <div className="p-4 bg-orange-50 border border-orange-300 rounded-lg">
-          <div className="font-semibold text-orange-800 mb-1">Manager Requested Changes</div>
-          <p className="text-orange-700 text-sm">{job.changeRequestNotes}</p>
+        <div className="p-4 bg-orange-900/20 border border-orange-300 rounded-lg">
+          <div className="font-semibold text-orange-300 mb-1">Manager Requested Changes</div>
+          <p className="text-orange-400 text-sm">{job.changeRequestNotes}</p>
           <p className="text-orange-600 text-xs mt-2">Address these issues and re-submit for review.</p>
         </div>
       )}
 
       {/* Pending Review Banner */}
       {job.status === 'pending_review' && (
-        <div className="p-4 bg-teal-50 border border-teal-200 rounded-lg flex items-center gap-2">
+        <div className="p-4 bg-teal-900/20 border border-teal-800/50 rounded-lg flex items-center gap-2">
           <span className="text-teal-600 text-lg">⏳</span>
           <div>
-            <div className="font-semibold text-teal-800">Job Submitted for Review</div>
+            <div className="font-semibold text-teal-300">Job Submitted for Review</div>
             <div className="text-sm text-teal-600">Awaiting manager approval. No further edits until reviewed.</div>
           </div>
         </div>
@@ -261,10 +260,10 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Complete Banner */}
       {job.status === 'complete' && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+        <div className="p-4 bg-green-900/20 border border-green-800/50 rounded-lg flex items-center gap-2">
           <span className="text-green-600 text-lg">✓</span>
           <div>
-            <div className="font-semibold text-green-800">Job Complete</div>
+            <div className="font-semibold text-green-300">Job Complete</div>
             {job.completedAt && (
               <div className="text-sm text-green-600">Completed {new Date(job.completedAt).toLocaleString()}</div>
             )}
@@ -278,11 +277,11 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex justify-between items-start gap-3">
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h1 className="text-xl font-bold text-gray-900">{job.clientName}</h1>
-                <span className="text-xs text-gray-400 font-mono">{job.jobNumber}</span>
+                <h1 className="text-xl font-bold text-slate-100">{job.clientName}</h1>
+                <span className="text-xs text-slate-500 font-mono">{job.jobNumber}</span>
               </div>
-              <p className="text-gray-600 text-sm">{job.address}</p>
-              {job.description && <p className="text-gray-500 mt-2 text-sm">{job.description}</p>}
+              <p className="text-slate-400 text-sm">{job.address}</p>
+              {job.description && <p className="text-slate-400 mt-2 text-sm">{job.description}</p>}
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <StatusBadge status={job.status} />
@@ -299,7 +298,7 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-500">Current</div>
+                <div className="text-sm text-slate-400">Current</div>
                 <StatusBadge status={job.status} />
               </div>
               <Button onClick={() => handleStatusUpdate(nextStatus)} className="capitalize">
@@ -327,20 +326,20 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
           </CardHeader>
           <CardContent>
             {sectionPhotos.length === 0 ? (
-              <p className="text-gray-400 text-center py-3 text-sm">
+              <p className="text-slate-500 text-center py-3 text-sm">
                 No {label.toLowerCase()} photos{type !== 'during' ? ' — 2 required' : ''}
               </p>
             ) : (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {sectionPhotos.map((photo) => (
                   <div key={photo.id} className="relative group">
                     <img src={photo.photoUrl} alt={label} className="w-full h-24 object-cover rounded-lg" />
                     {!isLocked && (
                       <button
                         onClick={() => deleteJobPhoto(photo.id)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 bg-red-900/200 text-white p-0.5 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
@@ -365,15 +364,15 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
         </CardHeader>
         <CardContent>
           {inventoryUsed.length === 0 ? (
-            <p className="text-gray-400 text-center py-3 text-sm">No inventory logged — 1 required</p>
+            <p className="text-slate-500 text-center py-3 text-sm">No inventory logged — 1 required</p>
           ) : (
             <div className="space-y-2">
               {inventoryUsed.map((usage) => (
-                <div key={usage.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium text-gray-900 text-sm">{usage.item.name}</span>
+                <div key={usage.id} className="flex justify-between items-center p-3 bg-slate-950 rounded-lg">
+                  <span className="font-medium text-slate-100 text-sm">{usage.item.name}</span>
                   <span className="text-sm">
                     <span className="font-medium">{usage.quantityUsed}</span>
-                    <span className="text-gray-500 ml-1">{usage.item.unit}</span>
+                    <span className="text-slate-400 ml-1">{usage.item.unit}</span>
                   </span>
                 </div>
               ))}
@@ -396,7 +395,7 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
         </CardHeader>
         <CardContent>
           {editingChecklist ? (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-fade-in">
               {job.jobType === 'tree' && (
                 <>
                   <Select
@@ -431,7 +430,7 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
               {job.jobType === 'sod' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Has Irrigation? *</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Has Irrigation? *</label>
                     <div className="flex gap-3">
                       <Button
                         size="sm"
@@ -470,44 +469,44 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
             <div className="space-y-2 text-sm">
               {job.jobType === 'tree' && (
                 <>
-                  <div className="flex justify-between py-1 border-b border-gray-100">
-                    <span className="text-gray-500">Tree Size</span>
+                  <div className="flex justify-between py-1 border-b border-slate-800">
+                    <span className="text-slate-400">Tree Size</span>
                     <span className="font-medium capitalize">{checklist.treeSize}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="text-gray-500">Tree Height</span>
+                    <span className="text-slate-400">Tree Height</span>
                     <span className="font-medium">{checklist.treeHeightFt} ft</span>
                   </div>
                 </>
               )}
               {job.jobType === 'irrigation' && (
                 <div className="flex justify-between py-1">
-                  <span className="text-gray-500">Valve Count</span>
+                  <span className="text-slate-400">Valve Count</span>
                   <span className="font-medium">{checklist.valveCount}</span>
                 </div>
               )}
               {job.jobType === 'sod' && (
                 <>
-                  <div className="flex justify-between py-1 border-b border-gray-100">
-                    <span className="text-gray-500">Has Irrigation</span>
+                  <div className="flex justify-between py-1 border-b border-slate-800">
+                    <span className="text-slate-400">Has Irrigation</span>
                     <span className="font-medium">{checklist.hasIrrigation ? 'Yes' : 'No'}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className="text-gray-500">Sod Type</span>
+                    <span className="text-slate-400">Sod Type</span>
                     <span className="font-medium">{checklist.sodType}</span>
                   </div>
                 </>
               )}
               {job.jobType === 'other' && (
                 <div>
-                  <span className="text-gray-500 block">Notes</span>
+                  <span className="text-slate-400 block">Notes</span>
                   <p className="font-medium mt-1">{checklist.customNotes || 'None'}</p>
                 </div>
               )}
               <div className="text-xs text-green-600 mt-2">✓ Checklist saved</div>
             </div>
           ) : (
-            <p className="text-gray-400 text-center py-3 text-sm">
+            <p className="text-slate-500 text-center py-3 text-sm">
               {job.jobType !== 'other' ? 'Checklist required — tap Fill Out' : 'No checklist required for this job type'}
             </p>
           )}
@@ -540,8 +539,8 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           ) : (
-            <p className="text-gray-700 whitespace-pre-wrap text-sm">
-              {job.notes || <span className="text-gray-400">No notes added</span>}
+            <p className="text-slate-300 whitespace-pre-wrap text-sm">
+              {job.notes || <span className="text-slate-500">No notes added</span>}
             </p>
           )}
         </CardContent>
@@ -589,9 +588,9 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
             accept="image/*"
             capture="environment"
             onChange={handlePhotoUpload}
-            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500"
+            className="w-full p-4 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-blue-500"
           />
-          <p className="text-sm text-gray-500 text-center">Take a photo or select from gallery</p>
+          <p className="text-sm text-slate-400 text-center">Take a photo or select from gallery</p>
         </div>
       </Modal>
 
@@ -633,32 +632,38 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
         footer={<Button onClick={() => setShowValidationModal(false)}>Got it</Button>}
       >
         <div className="space-y-3">
-          <p className="text-gray-600 text-sm">Complete all requirements before submitting:</p>
+          <p className="text-slate-400 text-sm">Complete all requirements before submitting:</p>
           <div className="space-y-2">
             {validationResult && (
               <>
                 <div className="flex items-center gap-2 text-sm">
                   <span>{validationResult.hasMinBeforePhotos ? '✅' : '❌'}</span>
-                  <span className={validationResult.hasMinBeforePhotos ? 'text-green-700' : 'text-red-600'}>
+                  <span className={validationResult.hasMinBeforePhotos ? 'text-green-400' : 'text-red-400'}>
                     2+ before photos ({beforePhotos.length} uploaded)
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span>{validationResult.hasMinAfterPhotos ? '✅' : '❌'}</span>
-                  <span className={validationResult.hasMinAfterPhotos ? 'text-green-700' : 'text-red-600'}>
+                  <span className={validationResult.hasMinAfterPhotos ? 'text-green-400' : 'text-red-400'}>
                     2+ after photos ({afterPhotos.length} uploaded)
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span>{validationResult.hasInventoryLogged ? '✅' : '❌'}</span>
-                  <span className={validationResult.hasInventoryLogged ? 'text-green-700' : 'text-red-600'}>
+                  <span className={validationResult.hasInventoryLogged ? 'text-green-400' : 'text-red-400'}>
                     At least 1 inventory item logged
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span>{validationResult.hasChecklistCompleted ? '✅' : '❌'}</span>
-                  <span className={validationResult.hasChecklistCompleted ? 'text-green-700' : 'text-red-600'}>
+                  <span className={validationResult.hasChecklistCompleted ? 'text-green-400' : 'text-red-400'}>
                     Checklist completed
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span>{validationResult.hasNotes ? '✅' : '❌'}</span>
+                  <span className={validationResult.hasNotes ? 'text-green-400' : 'text-red-400'}>
+                    Job notes added
                   </span>
                 </div>
               </>
@@ -681,7 +686,7 @@ export default function TechJobDetailPage({ params }: { params: Promise<{ id: st
           </>
         }
       >
-        <p className="text-gray-700">
+        <p className="text-slate-300">
           Once submitted, you cannot edit this job until a manager reviews it. Continue?
         </p>
       </Modal>

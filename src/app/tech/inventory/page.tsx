@@ -33,13 +33,13 @@ export default function TechInventoryPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/tech" className="text-blue-600 hover:text-blue-700 text-sm">← Back</Link>
-        <h1 className="text-2xl font-bold text-gray-900">My Inventory</h1>
+        <Link href="/tech" className="text-blue-600 hover:text-blue-400 text-sm">← Back</Link>
+        <h1 className="text-2xl font-bold text-slate-100">My Inventory</h1>
       </div>
 
       {inventory.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-gray-500">
+          <CardContent className="py-12 text-center text-slate-400">
             No inventory assigned to you yet.
             <br />
             <span className="text-sm">Contact your admin to get materials assigned.</span>
@@ -51,20 +51,20 @@ export default function TechInventoryPage() {
           <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardContent className="text-center py-4">
-                <div className="text-2xl font-bold text-gray-900">{inventory.length}</div>
-                <div className="text-sm text-gray-500">Total Items</div>
+                <div className="text-2xl font-bold text-slate-100">{inventory.length}</div>
+                <div className="text-sm text-slate-400">Total Items</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="text-center py-4">
                 <div className="text-2xl font-bold text-yellow-600">{lowStock.length}</div>
-                <div className="text-sm text-gray-500">Low Stock</div>
+                <div className="text-sm text-slate-400">Low Stock</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="text-center py-4">
                 <div className="text-2xl font-bold text-red-600">{outOfStock.length}</div>
-                <div className="text-sm text-gray-500">Out of Stock</div>
+                <div className="text-sm text-slate-400">Out of Stock</div>
               </CardContent>
             </Card>
           </div>
@@ -79,14 +79,14 @@ export default function TechInventoryPage() {
                 <div className="space-y-2">
                   {inventory.map((inv) => {
                     const isSelected = selectedItemId === inv.itemId;
-                    let stockColor = 'text-gray-900';
-                    let bgClass = isSelected ? 'bg-blue-50 border border-blue-300' : 'bg-gray-50 hover:bg-gray-100';
+                    let stockColor = 'text-slate-100';
+                    let bgClass = isSelected ? 'bg-blue-900/20 border border-blue-300' : 'bg-slate-950 hover:bg-slate-800';
                     if (inv.quantity === 0) {
                       stockColor = 'text-red-600';
-                      bgClass = isSelected ? 'bg-blue-50 border border-blue-300' : 'bg-red-50 hover:bg-red-100';
+                      bgClass = isSelected ? 'bg-blue-900/20 border border-blue-300' : 'bg-red-900/20 hover:bg-red-100';
                     } else if (inv.quantity <= 5) {
                       stockColor = 'text-yellow-600';
-                      bgClass = isSelected ? 'bg-blue-50 border border-blue-300' : 'bg-yellow-50 hover:bg-yellow-100';
+                      bgClass = isSelected ? 'bg-blue-900/20 border border-blue-300' : 'bg-amber-900/20 hover:bg-yellow-100';
                     }
 
                     return (
@@ -96,14 +96,14 @@ export default function TechInventoryPage() {
                         className={`w-full text-left flex justify-between items-center p-4 rounded-lg transition-colors cursor-pointer ${bgClass}`}
                       >
                         <div>
-                          <div className="font-medium text-gray-900">{inv.item.name}</div>
-                          <div className="text-sm text-gray-500">{inv.item.unit}</div>
+                          <div className="font-medium text-slate-100">{inv.item.name}</div>
+                          <div className="text-sm text-slate-400">{inv.item.unit}</div>
                           {inv.quantity === 0 && <div className="text-xs text-red-500 mt-0.5">Out of stock</div>}
                           {inv.quantity > 0 && inv.quantity <= 5 && <div className="text-xs text-yellow-600 mt-0.5">Low stock</div>}
                         </div>
                         <div className="text-right">
                           <div className={`text-xl font-bold ${stockColor}`}>{inv.quantity}</div>
-                          <div className="text-xs text-gray-400">{inv.item.unit}</div>
+                          <div className="text-xs text-slate-500">{inv.item.unit}</div>
                         </div>
                       </button>
                     );
@@ -119,11 +119,11 @@ export default function TechInventoryPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle>{selectedInv.item.name}</CardTitle>
-                      <p className="text-sm text-gray-500 mt-1">Usage history</p>
+                      <p className="text-sm text-slate-400 mt-1">Usage history</p>
                     </div>
                     <button
                       onClick={() => setSelectedItemId(null)}
-                      className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+                      className="text-slate-500 hover:text-slate-400 text-lg leading-none"
                     >
                       ✕
                     </button>
@@ -131,40 +131,40 @@ export default function TechInventoryPage() {
                 </CardHeader>
                 <CardContent>
                   {usageHistory.length === 0 ? (
-                    <p className="text-gray-400 text-center py-6 text-sm">
+                    <p className="text-slate-500 text-center py-6 text-sm">
                       No usage logged for this item yet
                     </p>
                   ) : (
                     <div className="space-y-3">
                       {usageHistory.map((entry) => (
-                        <div key={entry.id} className="p-3 bg-gray-50 rounded-lg">
+                        <div key={entry.id} className="p-3 bg-slate-950 rounded-lg">
                           <div className="flex justify-between items-start">
                             <div>
                               {entry.job ? (
                                 <Link
                                   href={`/tech/jobs/${entry.job.id}`}
-                                  className="font-medium text-blue-600 hover:text-blue-700 text-sm"
+                                  className="font-medium text-blue-600 hover:text-blue-400 text-sm"
                                 >
                                   {entry.job.clientName}
                                 </Link>
                               ) : (
-                                <span className="font-medium text-gray-700 text-sm">Unknown Job</span>
+                                <span className="font-medium text-slate-300 text-sm">Unknown Job</span>
                               )}
                               {entry.job && (
-                                <div className="text-xs text-gray-400 font-mono">{entry.job.jobNumber}</div>
+                                <div className="text-xs text-slate-500 font-mono">{entry.job.jobNumber}</div>
                               )}
                             </div>
                             <div className="text-right">
-                              <span className="font-semibold text-gray-900">−{entry.quantityUsed}</span>
-                              <span className="text-gray-500 text-sm ml-1">{selectedInv.item.unit}</span>
+                              <span className="font-semibold text-slate-100">−{entry.quantityUsed}</span>
+                              <span className="text-slate-400 text-sm ml-1">{selectedInv.item.unit}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-400 mt-1">
+                          <div className="text-xs text-slate-500 mt-1">
                             {new Date(entry.createdAt).toLocaleString()}
                           </div>
                         </div>
                       ))}
-                      <div className="pt-2 border-t border-gray-200 flex justify-between text-sm font-medium text-gray-700">
+                      <div className="pt-2 border-t border-slate-800 flex justify-between text-sm font-medium text-slate-300">
                         <span>Total used</span>
                         <span>
                           {usageHistory.reduce((sum, e) => sum + e.quantityUsed, 0)} {selectedInv.item.unit}
