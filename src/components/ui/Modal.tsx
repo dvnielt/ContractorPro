@@ -12,11 +12,8 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
-  // Close on escape key
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
@@ -30,36 +27,35 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-fade-in-fast">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col">
+      {/* Sheet on mobile, centered on desktop */}
+      <div className="relative bg-slate-900 border border-slate-700 rounded-t-2xl sm:rounded-xl shadow-2xl shadow-black/60 w-full sm:max-w-md mx-0 sm:mx-4 max-h-[92vh] flex flex-col animate-scale-in">
+        {/* Drag handle on mobile */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-slate-700" />
+        </div>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+          <h2 className="text-base font-semibold text-slate-100">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-200"
           >
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-
         {/* Content */}
-        <div className="p-4 overflow-y-auto flex-1">
-          {children}
-        </div>
-
+        <div className="p-4 overflow-y-auto flex-1">{children}</div>
         {/* Footer */}
         {footer && (
-          <div className="p-4 border-t border-gray-200 flex gap-2 justify-end">
+          <div className="p-4 border-t border-slate-800 flex gap-2 justify-end">
             {footer}
           </div>
         )}
@@ -68,7 +64,6 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
   );
 }
 
-// Confirmation modal helper
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -81,14 +76,8 @@ interface ConfirmModalProps {
 }
 
 export function ConfirmModal({
-  isOpen,
-  onClose,
-  onConfirm,
-  title,
-  message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  variant = 'primary',
+  isOpen, onClose, onConfirm, title, message,
+  confirmText = 'Confirm', cancelText = 'Cancel', variant = 'primary',
 }: ConfirmModalProps) {
   return (
     <Modal
@@ -97,16 +86,12 @@ export function ConfirmModal({
       title={title}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
-            {cancelText}
-          </Button>
-          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm}>
-            {confirmText}
-          </Button>
+          <Button variant="secondary" onClick={onClose}>{cancelText}</Button>
+          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm}>{confirmText}</Button>
         </>
       }
     >
-      <p className="text-gray-600">{message}</p>
+      <p className="text-slate-300">{message}</p>
     </Modal>
   );
 }

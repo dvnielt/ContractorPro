@@ -4,13 +4,13 @@ interface SkeletonProps {
 
 export function Skeleton({ className = '' }: SkeletonProps) {
   return (
-    <div className={`animate-pulse bg-gray-200 rounded-md ${className}`} />
+    <div className={`animate-pulse bg-slate-700 rounded-md ${className}`} />
   );
 }
 
 export function SkeletonCard() {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+    <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 space-y-3">
       <Skeleton className="h-4 w-1/3" />
       <Skeleton className="h-8 w-1/2" />
       <Skeleton className="h-3 w-2/3" />
@@ -37,7 +37,7 @@ export function DashboardSkeleton() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+          <div key={i} className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-2">
             <Skeleton className="h-3 w-2/3" />
             <Skeleton className="h-8 w-1/2" />
           </div>
@@ -55,7 +55,7 @@ export function DashboardSkeleton() {
 
 export function ListSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+    <div className="bg-slate-900 rounded-xl border border-slate-800 divide-y divide-slate-800">
       {[...Array(rows)].map((_, i) => (
         <div key={i} className="px-4">
           <SkeletonRow />

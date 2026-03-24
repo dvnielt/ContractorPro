@@ -11,10 +11,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300',
-  secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:bg-gray-50',
-  danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
-  ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 disabled:text-gray-300',
+  primary:   'bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700 disabled:bg-blue-900 disabled:text-blue-500 shadow-sm shadow-blue-900/50',
+  secondary: 'bg-slate-700 text-slate-100 hover:bg-slate-600 active:bg-slate-800 disabled:bg-slate-800 disabled:text-slate-500',
+  danger:    'bg-red-600 text-white hover:bg-red-500 active:bg-red-700 disabled:bg-red-900 disabled:text-red-400 shadow-sm shadow-red-900/50',
+  ghost:     'bg-transparent text-slate-300 hover:bg-slate-800 active:bg-slate-700 disabled:text-slate-600',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -34,9 +34,11 @@ export function Button({
   return (
     <button
       className={`
-        rounded-lg font-medium transition-colors
+        rounded-lg font-medium
+        transition-all duration-150
+        active:scale-[0.97]
         min-h-[44px] min-w-[44px]
-        disabled:cursor-not-allowed
+        disabled:cursor-not-allowed disabled:active:scale-100
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${fullWidth ? 'w-full' : ''}
