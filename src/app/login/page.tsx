@@ -20,16 +20,15 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    const { error: signInError } = await signIn(email.trim(), password);
+    const { error: signInError, role } = await signIn(email.trim(), password);
     if (signInError) {
       setError(signInError);
       setIsLoading(false);
       return;
     }
 
-    // Let the root page handle role-based redirect
-    router.push('/');
-    router.refresh();
+    // Redirect directly to the correct dashboard based on role
+    router.push(role === 'admin' ? '/admin' : '/tech');
   };
 
   return (
