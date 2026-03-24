@@ -8,7 +8,8 @@ export async function POST(
   const { id: jobId } = await params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) { console.error('Auth error:', authError.message); return NextResponse.json({ error: 'Service unavailable' }, { status: 503 }); }
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
@@ -32,7 +33,7 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await supabase.from('job_status_history').insert({
+  const { error: historyError } = await supabase.from('job_status_history').insert({
     job_id: jobId,
     old_status: job.status,
     new_status: 'in_progress',
@@ -40,6 +41,7 @@ export async function POST(
     changed_at: now,
     note: note.trim(),
   });
+  if (historyError) console.error('Status history insert failed:', historyError.message);
 
   await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email`, {
     method: 'POST',

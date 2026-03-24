@@ -82,11 +82,19 @@ export async function DELETE(
   if (!photo) return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
   if (photo.uploaded_by !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  // Delete from storage
-  await supabase.storage.from('job-photos').remove([photo.photo_url]);
+  // Delete from storage first — if this fails, don't orphan the DB record
+  const { error: storageError } = await supabase.storage.from('job-photos').remove([photo.photo_url]);
+  if (storageError) {
+    console.error('Storage delete failed:', storageError.message);
+    return NextResponse.json({ error: 'Failed to delete photo from storage' }, { status: 500 });
+  }
 
-  // Delete record
-  await supabase.from('job_photos').delete().eq('id', photoId);
+  // Delete DB record
+  const { error: deleteError } = await supabase.from('job_photos').delete().eq('id', photoId);
+  if (deleteError) {
+    console.error('DB photo delete failed:', deleteError.message);
+    return NextResponse.json({ error: 'Failed to delete photo record' }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
